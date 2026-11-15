@@ -86,6 +86,7 @@ model User {
   notifications Notification[]
   auditLogs AuditLog[]
   addresses SavedAddress[]
+  cancellationRequests CancellationRequest[]
   @@index([role,createdAt])
 }
 model Account {
@@ -214,6 +215,8 @@ model Vehicle {
   bookings Booking[]
   favorites Favorite[]
   reviews Review[]
+  @@index([status,dailyPriceCents,id],map:"Vehicle_status_price_idx")
+  @@index([status,transmission,fuel,seats],map:"Vehicle_status_specs_idx")
   @@index([status,displayOrder])
   @@index([brandId,status])
   @@index([categoryId,dailyPriceCents])
@@ -286,6 +289,10 @@ model Booking {
   insurancePlanId String?
   couponId String?
   cancelledAt DateTime? @db.Timestamptz(3)
+  version Int @default(0)
+  initialRequestHash String?
+  requestedCouponCode String?
+  draftExpiresAt DateTime? @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   user User @relation(fields:[userId],references:[id],onDelete:Restrict)
@@ -299,7 +306,9 @@ model Booking {
   priceSnapshot BookingPriceSnapshot?
   payments Payment[]
   review Review?
+  cancellationRequest CancellationRequest?
   @@index([vehicleId,pickupAt,returnAt])
+  @@index([userId,status,pickupAt],map:"Booking_user_status_pickup_idx")
   @@index([userId,createdAt])
   @@index([status,holdExpiresAt])
 }
@@ -308,6 +317,7 @@ model BookingExtra {
   bookingId String
   extraServiceId String
   nameSnapshot String
+  perDaySnapshot Boolean @default(false)
   unitPriceCents Int
   quantity Int @default(1)
   totalCents Int
@@ -322,7 +332,8 @@ model BookingDriver {
   lastName String
   age Int
   phone String
-  encryptedLicense String @db.Text
+  encryptedLicense String? @db.Text
+  ageConfirmedAt DateTime? @db.Timestamptz(3)
   privateDocumentKey String?
   chauffeur Boolean @default(false)
   booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
@@ -342,6 +353,7 @@ model BookingPriceSnapshot {
   depositCents Int
   totalCents Int
   pricingVersion Int @default(1)
+  taxRateBps Int @default(0)
   couponSnapshot Json?
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   booking Booking @relation(fields:[bookingId],references:[id],onDelete:Restrict)
@@ -452,4 +464,32 @@ model SavedAddress {
   countryCode String @db.VarChar(2)
   user User @relation(fields:[userId],references:[id],onDelete:Cascade)
   @@index([userId])
+}
+
+enum CancellationStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+}
+model CancellationRequest {
+  id String @id @default(cuid())
+  bookingId String @unique
+  userId String
+  reason String
+  status CancellationStatus @default(REQUESTED)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  reviewedAt DateTime? @db.Timestamptz(3)
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Restrict)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  @@index([userId,status])
+}
+model PricingPolicy {
+  id String @id
+  version Int @default(1)
+  taxRateBps Int
+  holdMinutes Int
+  maxRentalDays Int
+  maxAdvanceDays Int
+  currency String @db.VarChar(3)
+  isDemo Boolean @default(true)
 }

@@ -3,19 +3,22 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Search } from "lucide-react";
-import {
-  rentalSearchSchema,
-  isPickupInPast,
-  type RentalSearch,
-} from "@/lib/search";
-export function SearchForm({ initial }: { initial?: Partial<RentalSearch> }) {
+import { rentalSearchSchema, type RentalSearch } from "@/lib/search";
+export function SearchForm({
+  initial,
+  locations = ["Miami", "New York", "Los Angeles"],
+  preserve = {},
+}: {
+  initial?: Partial<RentalSearch>;
+  locations?: string[];
+  preserve?: Record<string, string>;
+}) {
   const router = useRouter();
   const {
     register,
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
   } = useForm<RentalSearch>({
     resolver: zodResolver(rentalSearchSchema),
     defaultValues: {
@@ -25,11 +28,9 @@ export function SearchForm({ initial }: { initial?: Partial<RentalSearch> }) {
     },
   });
   function search(data: RentalSearch) {
-    if (isPickupInPast(data.pickup)) {
-      setError("pickup", { message: "Pickup must be in the future." });
-      return;
-    }
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(preserve);
+    params.delete("page");
+    params.delete("location");
     if (data.location) params.set("location", data.location);
     params.set("pickup", data.pickup);
     params.set("return", data.return);
@@ -48,9 +49,9 @@ export function SearchForm({ initial }: { initial?: Partial<RentalSearch> }) {
           <MapPin size={15} />
           <select id="search-location" {...register("location")}>
             <option value="">Enter City, Airport, or Address</option>
-            <option>Miami</option>
-            <option>New York</option>
-            <option>Los Angeles</option>
+            {locations.map((city) => (
+              <option key={city}>{city}</option>
+            ))}
           </select>
         </div>
       </div>

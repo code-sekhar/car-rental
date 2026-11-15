@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+const futureDate = (days: number) =>
+  new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 test("homepage sections, images, FAQ, and responsive layout", async ({
   page,
 }, testInfo) => {
@@ -59,33 +61,33 @@ test("search validates dates and carries criteria into catalog", async ({
   await page
     .getByLabel("Pickup Location", { exact: true })
     .selectOption("Miami");
-  await page.getByLabel("Pickup Date", { exact: true }).fill("2030-06-02");
+  await page.getByLabel("Pickup Date", { exact: true }).fill(futureDate(80));
   await page.getByLabel("Pickup Time", { exact: true }).fill("10:00");
-  await page.getByLabel("Return Date", { exact: true }).fill("2030-06-01");
+  await page.getByLabel("Return Date", { exact: true }).fill(futureDate(79));
   await page.getByLabel("Return Time", { exact: true }).fill("10:00");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByText("Return must be after pickup.")).toBeVisible();
-  await page.getByLabel("Return Date", { exact: true }).fill("2030-06-03");
+  await page.getByLabel("Return Date", { exact: true }).fill(futureDate(81));
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page).toHaveURL(/\/cars\?location=Miami&pickup=/);
   await expect(
-    page.getByRole("main").getByText("Showing 2 of 12 demo cars"),
+    page.getByRole("main").getByText("Showing 1–2 of 2 cars"),
   ).toBeVisible();
 });
 test("catalog filters combine, survive reload, and show empty results", async ({
   page,
 }) => {
   await page.goto(
-    "/cars?location=Miami&pickup=2030-06-02T10%3A00&return=2030-06-03T10%3A00",
+    `/cars?location=Miami&pickup=${futureDate(80)}T10%3A00&return=${futureDate(81)}T10%3A00`,
   );
   await page
     .getByRole("combobox", { name: "Car Brand", exact: true })
     .selectOption("Ferrari");
   await page.getByRole("button", { name: "Filter Results" }).click();
   await expect(
-    page.getByRole("main").getByText("Showing 1 of 12 demo cars"),
+    page.getByRole("main").getByText("Showing 1–1 of 1 cars"),
   ).toBeVisible();
-  await expect(page).toHaveURL(/pickup=2030/);
+  await expect(page).toHaveURL(/pickup=20/);
   await page.reload();
   await expect(
     page.getByRole("combobox", { name: "Car Brand", exact: true }),
@@ -99,7 +101,7 @@ test("catalog filters combine, survive reload, and show empty results", async ({
   ).toBeVisible();
   await page.getByRole("link", { name: "Clear Filters", exact: true }).click();
   await expect(
-    page.getByRole("main").getByText("Showing 12 of 12 demo cars"),
+    page.getByRole("main").getByText("Showing 1–9 of 12 cars"),
   ).toBeVisible();
 });
 test("vehicle preview and unknown vehicle are handled honestly", async ({
@@ -112,9 +114,7 @@ test("vehicle preview and unknown vehicle are handled honestly", async ({
   await expect(
     page.getByRole("heading", { name: "2018 Chevrolet Camaro", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Booking coming soon" }),
-  ).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Book Now" })).toBeVisible();
   await page.goto("/cars/not-a-vehicle");
   await expect(
     page.getByRole("heading", { name: "This road doesn’t lead anywhere." }),
@@ -159,7 +159,7 @@ test("navigation stays usable on small screens", async ({ page, isMobile }) => {
   await page.getByRole("link", { name: "SUVs & family cars" }).click();
   await expect(page).toHaveURL(/\/cars\?category=SUV/);
   await expect(
-    page.getByRole("main").getByText("Showing 1 of 12 demo cars"),
+    page.getByRole("main").getByText("Showing 1–1 of 1 cars"),
   ).toBeVisible();
 });
 

@@ -132,6 +132,45 @@ async function main() {
     },
     update: {},
   });
+  await db.pricingPolicy.upsert({
+    where: { id: "standard" },
+    create: {
+      id: "standard",
+      version: 1,
+      taxRateBps: 800,
+      holdMinutes: 15,
+      maxRentalDays: 30,
+      maxAdvanceDays: 365,
+      currency: "USD",
+      isDemo: true,
+    },
+    update: {},
+  });
+  await db.extraService.upsert({
+    where: { code: "chauffeur" },
+    create: {
+      code: "chauffeur",
+      name: "Acting Driver / Chauffeur",
+      description:
+        "Chauffeur request; assignment and eligibility must be reviewed before payment activation.",
+      priceCents: 8000,
+      perDay: true,
+    },
+    update: {},
+  });
+  await db.coupon.upsert({
+    where: { code: "WELCOME10" },
+    create: {
+      code: "WELCOME10",
+      kind: "PERCENT",
+      discountBps: 1000,
+      minimumCents: 10000,
+      maxUses: 100,
+      startsAt: new Date("2026-01-01T00:00:00Z"),
+      expiresAt: new Date("2036-01-01T00:00:00Z"),
+    },
+    update: {},
+  });
   for (const [email, name, role, password] of [
     ["customer@veltrix.test", "Demo Customer", "CUSTOMER", "VeltrixDemo!2026"],
     ["admin@veltrix.test", "Demo Administrator", "ADMIN", "VeltrixAdmin!2026"],

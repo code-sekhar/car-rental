@@ -96,8 +96,8 @@ export async function Footer() {
               </button>
             </div>
             <p className="small">
-              Portfolio preview. Demo vehicles and illustrative rates.
-              Reservations are not yet available.
+              Portfolio preview. Demo vehicles and illustrative rates. Unpaid
+              holds available. Payments remain disabled.
             </p>
           </div>
         </div>

@@ -1,4 +1,8 @@
 export type Vehicle = {
+  latitude?: number | null;
+  longitude?: number | null;
+  locationId?: string;
+  timeZone?: string;
   slug: string;
   name: string;
   brand: string;

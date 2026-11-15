@@ -2,7 +2,7 @@
 
 A portfolio car-rental application built with Next.js App Router, React, strict TypeScript, Tailwind, PostgreSQL/Prisma and Auth.js. The supplied reference-based Veltrix UI is preserved.
 
-**Current milestone: real database and authentication foundation.** Registration, email verification, credentials login, session restoration/logout, password recovery, protected account pages and administrator authorization are implemented. The full booking/payment platform is not complete.
+**Current milestone: database-backed catalog and transactional unpaid reservations.** Authentication is preserved. Combined catalog filters, pagination, grid/list/map, time-zone-aware availability, persisted booking steps, server pricing, expiring holds, ownership and customer cancellation/history are implemented. Payment verification and confirmed rental fulfillment remain disabled.
 
 ## Local development
 
@@ -24,11 +24,13 @@ See [database/auth setup and demo accounts](docs/database-and-auth.md) and [shar
 ## Working features
 
 - Reference-based responsive homepage, original Veltrix branding, Fira Sans, optimized local images and shared navigation/footer.
-- Database-backed home inventory, catalog search/combined filters/sorting and vehicle details. Seed data is explicitly demonstration inventory; runtime application pages no longer import fixture vehicles.
+- Database-backed home inventory, combined catalog filters/sorting/pagination, grid/list/map and vehicle details. Seed data is explicitly demonstration inventory; runtime application pages no longer import fixture vehicles.
 - Real Auth.js login with Argon2id passwords, verified accounts, encrypted session cookies and PostgreSQL revocation checks.
 - Registration, verification/recovery email outbox, single-use expiring tokens, password reset and session invalidation.
 - Accessible login dialog and dedicated account forms with loading/validation/error states.
-- Authenticated profile/bookings/notifications foundation and role-protected admin overview with real database counts.
+- Authenticated profile/notifications, owned booking history/details/cancellation and role-protected admin overview with real database counts.
+- Persisted rental drafts, extras, encrypted license data, insurance and coupons; server-calculated integer prices and historical hold snapshots.
+- Time-zone-aware availability, transactional expiring unpaid holds, duplicate-submission protection and PostgreSQL overlap/maintenance guards. No simulated payments.
 - URL-based vehicle search, loading/error/empty/not-found states, working carousels and a browser-local shortlist. Account-backed favorites are a later feature.
 
 Local setup writes rendered verification/recovery emails to the private `.local/mail` directory. Follow the link locally to verify an account. This is explicitly a local transport, not verified external SMTP delivery. Production registration/recovery requires configured SMTP. Google OAuth remains disabled without credentials.
@@ -69,10 +71,12 @@ Run `npm run maintenance` through a provider-supported scheduler to retry queued
 - [UI architecture](docs/architecture.md)
 - [Design/asset provenance](docs/design-audit.md)
 - [Phase 1 UI record](docs/phase-1-status.md)
-- [Current milestone verification](docs/phase-2-status.md)
+- [Database/authentication verification](docs/phase-2-status.md)
+- [Catalog and booking architecture](docs/phase-3-architecture.md)
+- [Phase 3 verification](docs/phase-3-status.md)
 
 ## Remaining milestones
 
-Full grid/list/map and availability; transactional booking and server pricing; private identity uploads; verified sandbox payments/webhooks/refunds; receipts/email; complete customer/admin operations; GSAP animations and branded loaders; broader accessibility/performance measurement and production deployment.
+Private identity uploads; verified sandbox payments/webhooks/refunds; receipts/email; complete customer/admin operations; GSAP animations and branded loaders; broader accessibility/performance measurement and production deployment.
 
 Reference photographs are local design-preview assets with unverified publication rights. The original logo belongs to this project and Fira Sans's OFL license is included. No production credentials or real customer records are seeded or documented.

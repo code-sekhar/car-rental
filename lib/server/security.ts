@@ -33,6 +33,7 @@ export class InputError extends Error {
     public status = 400,
   ) {
     super(message);
+    this.name = "InputError";
   }
 }
 export async function rateLimit(
@@ -57,21 +58,21 @@ export async function rateLimit(
   if (record.count > limit)
     throw new InputError("Too many attempts. Please try again later.", 429);
 }
-const encryptionKey = () =>
-  createHash("sha256").update(`veltrix-private-mail:${secret()}`).digest();
-export function encryptPrivate(value: string) {
+const encryptionKey = (scope = "private-mail") =>
+  createHash("sha256").update(`veltrix-${scope}:${secret()}`).digest();
+export function encryptPrivate(value: string, scope = "private-mail") {
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", encryptionKey(), iv);
+  const cipher = createCipheriv("aes-256-gcm", encryptionKey(scope), iv);
   const data = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
   return [iv, cipher.getAuthTag(), data]
     .map((b) => b.toString("base64url"))
     .join(".");
 }
-export function decryptPrivate(value: string) {
+export function decryptPrivate(value: string, scope = "private-mail") {
   const [iv, tag, data] = value
     .split(".")
     .map((v) => Buffer.from(v, "base64url"));
-  const cipher = createDecipheriv("aes-256-gcm", encryptionKey(), iv);
+  const cipher = createDecipheriv("aes-256-gcm", encryptionKey(scope), iv);
   cipher.setAuthTag(tag);
   return Buffer.concat([cipher.update(data), cipher.final()]).toString("utf8");
 }

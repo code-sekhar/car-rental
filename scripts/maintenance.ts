@@ -10,8 +10,13 @@ async function main() {
       where: { expiresAt: { lt: new Date(now.getTime() - 7 * 86400000) } },
     }),
     db.booking.updateMany({
-      where: { status: "PENDING_PAYMENT", holdExpiresAt: { lt: now } },
-      data: { status: "EXPIRED" },
+      where: {
+        OR: [
+          { status: "PENDING_PAYMENT", holdExpiresAt: { lte: now } },
+          { status: "DRAFT", draftExpiresAt: { lte: now } },
+        ],
+      },
+      data: { status: "EXPIRED", version: { increment: 1 } },
     }),
   ]);
   const attemptedEmails = await retryEmailOutbox();

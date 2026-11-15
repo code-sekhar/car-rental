@@ -6,7 +6,7 @@ const dateTime = z.iso.datetime({
 });
 export const rentalSearchSchema = z
   .object({
-    location: z.enum(["", "Miami", "New York", "Los Angeles"]),
+    location: z.string().trim().max(100),
     pickup: dateTime,
     return: dateTime,
   })

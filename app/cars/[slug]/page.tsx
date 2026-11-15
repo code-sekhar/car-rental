@@ -91,13 +91,15 @@ export default async function CarDetail({
               <small> / Day</small>
             </p>
             <p className="notice">
-              Indicative base rate. Availability, extras, deposits and final
-              totals are not yet connected. Reservations are disabled during
-              Phase 1.
+              Check dates and locations for live availability. Final pricing
+              includes selected services, taxes and a refundable deposit.
             </p>
-            <button className="button button-primary w-full" disabled>
-              Booking coming soon
-            </button>
+            <Link
+              className="button button-primary w-full"
+              href={`/booking/new?vehicle=${vehicle.slug}`}
+            >
+              Book Now
+            </Link>
             <Link className="button button-outline w-full mt-3" href="/cars">
               Back to All Cars
             </Link>

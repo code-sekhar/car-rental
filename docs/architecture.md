@@ -1,6 +1,6 @@
 # Veltrix Rentals architecture
 
-The UI notes below record Phase 1. The current server/database/authentication architecture is documented in [database-and-auth.md](database-and-auth.md), with deployment requirements in [shared-hosting.md](shared-hosting.md). Runtime pages now read PostgreSQL and the authentication preview has been replaced.
+The UI notes below record Phase 1. The current server/database/authentication architecture is documented in [database-and-auth.md](database-and-auth.md), and the current catalog/reservation architecture in [phase-3-architecture.md](phase-3-architecture.md), with deployment requirements in [shared-hosting.md](shared-hosting.md). Runtime pages now read PostgreSQL and the authentication preview has been replaced.
 
 ## Current implementation: Phase 1
 

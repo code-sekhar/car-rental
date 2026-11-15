@@ -26,7 +26,7 @@ describe("rental search validation", () => {
         expect(result.error.issues[0].path).toEqual(["return"]);
     },
   );
-  it("rejects missing dates and unsupported locations", () => {
+  it("rejects missing dates and overlong locations", () => {
     expect(rentalSearchSchema.safeParse({ ...valid, pickup: "" }).success).toBe(
       false,
     );
@@ -34,7 +34,8 @@ describe("rental search validation", () => {
       rentalSearchSchema.safeParse({ ...valid, return: "garbage" }).success,
     ).toBe(false);
     expect(
-      rentalSearchSchema.safeParse({ ...valid, location: "unknown" }).success,
+      rentalSearchSchema.safeParse({ ...valid, location: "x".repeat(101) })
+        .success,
     ).toBe(false);
   });
   it.each(["1", "2030-02-30T10:00", "2030-13-01T10:00"])(

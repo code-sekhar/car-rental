@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { requireUser } from "@/lib/server/auth";
+import { myBookings } from "@/lib/server/bookings";
 import { db } from "@/lib/server/db";
 import { SignOutButton } from "@/components/auth/sign-out";
 export const metadata = {
@@ -10,12 +11,7 @@ export const metadata = {
 async function Account() {
   const user = await requireUser();
   const [bookings, notifications, sessions] = await Promise.all([
-    db.booking.findMany({
-      where: { userId: user.id },
-      include: { vehicle: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
+    myBookings(user.id),
     db.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -57,12 +53,26 @@ async function Account() {
         </section>
         <section className="account-panel">
           <h2>My Bookings</h2>
-          {bookings.length ? (
+          <Link href="/dashboard/bookings">View All Bookings</Link>
+          {bookings.records.length ? (
             <ul>
-              {bookings.map((booking) => (
+              {bookings.records.map((booking) => (
                 <li key={booking.id}>
-                  <strong>{booking.reference}</strong> · {booking.vehicle.name}{" "}
-                  · {booking.status}
+                  <Link href={`/dashboard/bookings/${booking.id}`}>
+                    <strong>{booking.reference}</strong>
+                  </Link>{" "}
+                  · {booking.vehicle.name} · {booking.status}
+                  <p>
+                    {booking.pickupAt.toISOString().slice(0, 10)} ·{" "}
+                    {[
+                      "DRAFT",
+                      "PENDING_PAYMENT",
+                      "CONFIRMED",
+                      "ACTIVE",
+                    ].includes(booking.status)
+                      ? "Upcoming / in progress"
+                      : "History"}
+                  </p>
                 </li>
               ))}
             </ul>

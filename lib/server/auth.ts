@@ -187,9 +187,12 @@ export async function currentUser() {
     },
   });
 }
-export async function requireUser() {
+export async function requireUser(returnTo?: string) {
   const user = await currentUser();
-  if (!user) redirect("/login");
+  if (!user)
+    redirect(
+      returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login",
+    );
   return user;
 }
 export async function requireAdmin() {

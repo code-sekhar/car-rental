@@ -12,7 +12,9 @@ export function AuthForm({
   initialMode = "signin",
   googleEnabled = false,
   onSuccess,
+  redirectTo = "/dashboard",
 }: {
+  redirectTo?: string;
   initialMode?: Mode;
   googleEnabled?: boolean;
   onSuccess?: () => void;
@@ -57,7 +59,7 @@ export function AuthForm({
           email: data.email,
           password: data.password,
           redirect: false,
-          callbackUrl: "/dashboard",
+          callbackUrl: redirectTo,
         });
         if (!result || result.error) {
           setFailure(
@@ -66,7 +68,7 @@ export function AuthForm({
           return;
         }
         onSuccess?.();
-        router.push("/dashboard");
+        router.push(redirectTo);
         router.refresh();
       } else {
         const endpoint =
@@ -242,7 +244,7 @@ export function AuthForm({
         <button
           type="button"
           className="button button-outline w-full mt-3"
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          onClick={() => signIn("google", { callbackUrl: redirectTo })}
         >
           Continue with Google
         </button>

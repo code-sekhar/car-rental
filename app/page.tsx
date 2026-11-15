@@ -102,7 +102,7 @@ const articles = [
   },
 ];
 export default async function Home() {
-  const { demoVehicles, popularVehicles, recommendedVehicles } =
+  const { demoVehicles, popularVehicles, recommendedVehicles, locations } =
     await homeInventory();
   return (
     <main id="main-content" className="home-page">
@@ -138,7 +138,7 @@ export default async function Home() {
         </div>
       </section>
       <div className="container home-search">
-        <SearchForm />
+        <SearchForm locations={locations} />
       </div>
       <section className="section home-how" id="how-it-works">
         <div className="container">
