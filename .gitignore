@@ -48,3 +48,6 @@ next-env.d.ts
 # Local PostgreSQL, private email outbox, and generated Prisma client
 /.local/
 /generated/prisma/
+
+# Private local documentation
+/docs/
