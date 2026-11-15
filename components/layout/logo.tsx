@@ -1,0 +1,26 @@
+import Link from "next/link";
+
+export function Logo({ light = false }: { light?: boolean }) {
+  return (
+    <Link
+      href="/"
+      className={`logo ${light ? "logo-light" : ""}`}
+      aria-label="Veltrix Rentals home"
+    >
+      <svg
+        width="46"
+        height="40"
+        viewBox="0 0 56 48"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M4 8h13l11 23L39 8h13L32 43h-8L4 8Z" fill="#FFA52D" />
+        <path d="m18 8 10 20L38 8H18Z" fill="#10788A" />
+        <path d="M25 13h6l-1 5h-4l-1-5Zm2 9h2v5h-2v-5Z" fill="white" />
+      </svg>
+      <span>
+        <strong>VELTRIX</strong> RENTALS
+      </span>
+    </Link>
+  );
+}

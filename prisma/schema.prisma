@@ -1,0 +1,455 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+enum VehicleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+}
+enum BookingStatus {
+  DRAFT
+  PENDING_PAYMENT
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+enum RefundStatus {
+  REQUESTED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+enum TokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+enum MailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+enum AvailabilityKind {
+  MAINTENANCE
+  BLOCKED
+}
+enum CouponKind {
+  PERCENT
+  FIXED
+}
+model User {
+  id String @id @default(cuid())
+  name String?
+  email String @unique
+  emailVerified DateTime? @db.Timestamptz(3)
+  image String?
+  passwordHash String?
+  role Role @default(CUSTOMER)
+  phone String?
+  disabledAt DateTime? @db.Timestamptz(3)
+  isDemo Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  accounts Account[]
+  sessions Session[]
+  authTokens AuthToken[]
+  bookings Booking[]
+  favorites Favorite[]
+  reviews Review[]
+  notifications Notification[]
+  auditLogs AuditLog[]
+  addresses SavedAddress[]
+  @@index([role,createdAt])
+}
+model Account {
+  id String @id @default(cuid())
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String? @db.Text
+  access_token String? @db.Text
+  expires_at Int?
+  token_type String?
+  scope String?
+  id_token String? @db.Text
+  session_state String?
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@unique([provider,providerAccountId])
+  @@index([userId])
+}
+model Session {
+  id String @id @default(cuid())
+  sessionToken String @unique
+  userId String
+  expires DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,expires])
+  @@index([expires])
+}
+model VerificationToken {
+  identifier String
+  token String @unique
+  expires DateTime @db.Timestamptz(3)
+  @@unique([identifier,token])
+}
+model AuthToken {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  purpose TokenPurpose
+  expiresAt DateTime @db.Timestamptz(3)
+  usedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,purpose,expiresAt])
+}
+model RateLimit {
+  key String @id
+  count Int @default(1)
+  expiresAt DateTime @db.Timestamptz(3)
+  @@index([expiresAt])
+}
+model EmailOutbox {
+  id String @id @default(cuid())
+  recipient String
+  subject String
+  encryptedBody String @db.Text
+  status MailStatus @default(PENDING)
+  attempts Int @default(0)
+  lastError String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  sentAt DateTime? @db.Timestamptz(3)
+  @@index([status,createdAt])
+}
+model VehicleBrand {
+  id String @id @default(cuid())
+  name String @unique
+  slug String @unique
+  vehicles Vehicle[]
+}
+model VehicleCategory {
+  id String @id @default(cuid())
+  name String @unique
+  slug String @unique
+  vehicles Vehicle[]
+}
+model RentalLocation {
+  id String @id @default(cuid())
+  name String @unique
+  address String
+  city String
+  countryCode String @db.VarChar(2)
+  timeZone String
+  latitude Float?
+  longitude Float?
+  isDemo Boolean @default(false)
+  active Boolean @default(true)
+  vehicles Vehicle[]
+  pickups Booking[] @relation("PickupLocation")
+  returns Booking[] @relation("ReturnLocation")
+  @@index([city,active])
+}
+model Vehicle {
+  id String @id @default(cuid())
+  slug String @unique
+  name String
+  description String @db.Text
+  brandId String
+  categoryId String
+  locationId String
+  status VehicleStatus @default(DRAFT)
+  transmission Transmission
+  fuel String
+  seats Int
+  year Int
+  mileageKm Int
+  dailyPriceCents Int
+  depositCents Int @default(120000)
+  deliveryFeeCents Int @default(6000)
+  currency String @default("USD") @db.VarChar(3)
+  featured Boolean @default(false)
+  popular Boolean @default(false)
+  representativeImageUrl String?
+  recommendationOrder Int?
+  recommended Boolean @default(false)
+  displayOrder Int @default(100)
+  isDemo Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  brand VehicleBrand @relation(fields:[brandId],references:[id],onDelete:Restrict)
+  category VehicleCategory @relation(fields:[categoryId],references:[id],onDelete:Restrict)
+  location RentalLocation @relation(fields:[locationId],references:[id],onDelete:Restrict)
+  images VehicleImage[]
+  features VehicleFeature[]
+  availability VehicleAvailability[]
+  bookings Booking[]
+  favorites Favorite[]
+  reviews Review[]
+  @@index([status,displayOrder])
+  @@index([brandId,status])
+  @@index([categoryId,dailyPriceCents])
+  @@index([locationId,status])
+  @@index([transmission,fuel,seats])
+}
+model VehicleImage {
+  id String @id @default(cuid())
+  vehicleId String
+  url String
+  alt String
+  position Int @default(0)
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+  @@unique([vehicleId,position])
+}
+model Feature {
+  id String @id @default(cuid())
+  name String @unique
+  vehicles VehicleFeature[]
+}
+model VehicleFeature {
+  vehicleId String
+  featureId String
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+  feature Feature @relation(fields:[featureId],references:[id],onDelete:Cascade)
+  @@id([vehicleId,featureId])
+  @@index([featureId])
+}
+model VehicleAvailability {
+  id String @id @default(cuid())
+  vehicleId String
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  kind AvailabilityKind
+  reason String?
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+  @@index([vehicleId,startsAt,endsAt])
+}
+model ExtraService {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  description String
+  priceCents Int
+  perDay Boolean @default(false)
+  active Boolean @default(true)
+  bookings BookingExtra[]
+}
+model InsurancePlan {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  pricePerDayCents Int
+  active Boolean @default(true)
+  bookings Booking[]
+}
+model Booking {
+  id String @id @default(cuid())
+  reference String @unique
+  idempotencyKey String @unique
+  userId String
+  vehicleId String
+  pickupLocationId String
+  returnLocationId String
+  pickupAt DateTime @db.Timestamptz(3)
+  returnAt DateTime @db.Timestamptz(3)
+  status BookingStatus @default(DRAFT)
+  delivery Boolean @default(false)
+  holdExpiresAt DateTime? @db.Timestamptz(3)
+  insurancePlanId String?
+  couponId String?
+  cancelledAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+  pickupLocation RentalLocation @relation("PickupLocation",fields:[pickupLocationId],references:[id],onDelete:Restrict)
+  returnLocation RentalLocation @relation("ReturnLocation",fields:[returnLocationId],references:[id],onDelete:Restrict)
+  insurancePlan InsurancePlan? @relation(fields:[insurancePlanId],references:[id],onDelete:Restrict)
+  coupon Coupon? @relation(fields:[couponId],references:[id],onDelete:Restrict)
+  extras BookingExtra[]
+  driver BookingDriver?
+  priceSnapshot BookingPriceSnapshot?
+  payments Payment[]
+  review Review?
+  @@index([vehicleId,pickupAt,returnAt])
+  @@index([userId,createdAt])
+  @@index([status,holdExpiresAt])
+}
+model BookingExtra {
+  id String @id @default(cuid())
+  bookingId String
+  extraServiceId String
+  nameSnapshot String
+  unitPriceCents Int
+  quantity Int @default(1)
+  totalCents Int
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+  service ExtraService @relation(fields:[extraServiceId],references:[id],onDelete:Restrict)
+  @@unique([bookingId,extraServiceId])
+}
+model BookingDriver {
+  id String @id @default(cuid())
+  bookingId String @unique
+  firstName String
+  lastName String
+  age Int
+  phone String
+  encryptedLicense String @db.Text
+  privateDocumentKey String?
+  chauffeur Boolean @default(false)
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+}
+model BookingPriceSnapshot {
+  id String @id @default(cuid())
+  bookingId String @unique
+  currency String @db.VarChar(3)
+  days Int
+  dailyRateCents Int
+  baseCents Int
+  extrasCents Int
+  insuranceCents Int
+  deliveryCents Int
+  discountCents Int
+  taxCents Int
+  depositCents Int
+  totalCents Int
+  pricingVersion Int @default(1)
+  couponSnapshot Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Restrict)
+}
+model Payment {
+  id String @id @default(cuid())
+  bookingId String
+  provider String
+  providerSessionId String? @unique
+  providerPaymentId String? @unique
+  idempotencyKey String @unique
+  status PaymentStatus @default(PENDING)
+  currency String @db.VarChar(3)
+  amountCents Int
+  verifiedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Restrict)
+  refunds Refund[]
+  @@index([bookingId,status])
+}
+model PaymentEvent {
+  id String @id @default(cuid())
+  provider String
+  providerEventId String
+  payloadHash String
+  processedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([provider,providerEventId])
+}
+model Refund {
+  id String @id @default(cuid())
+  paymentId String
+  providerRefundId String? @unique
+  idempotencyKey String @unique
+  amountCents Int
+  status RefundStatus @default(REQUESTED)
+  reason String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  payment Payment @relation(fields:[paymentId],references:[id],onDelete:Restrict)
+  @@index([paymentId,status])
+}
+model Coupon {
+  id String @id @default(cuid())
+  code String @unique
+  kind CouponKind
+  discountBps Int?
+  fixedAmountCents Int?
+  minimumCents Int @default(0)
+  maxUses Int?
+  startsAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  active Boolean @default(true)
+  bookings Booking[]
+}
+model Review {
+  id String @id @default(cuid())
+  userId String
+  vehicleId String
+  bookingId String @unique
+  rating Int
+  body String @db.Text
+  status ReviewStatus @default(PENDING)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Restrict)
+  @@index([vehicleId,status,createdAt])
+}
+model Favorite {
+  userId String
+  vehicleId String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+  @@id([userId,vehicleId])
+  @@index([vehicleId])
+}
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  title String
+  body String
+  readAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,readAt,createdAt])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  userId String?
+  action String
+  entityType String
+  entityId String?
+  metadata Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User? @relation(fields:[userId],references:[id],onDelete:SetNull)
+  @@index([userId,createdAt])
+  @@index([action,createdAt])
+}
+model SavedAddress {
+  id String @id @default(cuid())
+  userId String
+  label String
+  address String
+  city String
+  countryCode String @db.VarChar(2)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId])
+}
